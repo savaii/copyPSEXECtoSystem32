@@ -7,27 +7,26 @@ if (-not $isAdmin) {
     Exit
 }
 
-# Specify the source directory where PSExec is located on the network
-$sourceDirectory = "\\server\share\path\to\PSExec"
+# Specify the source directory where files are located on the network
+$sourceDirectory = "\\server\share\path\to\Files"
 
 # Specify the destination directory (C:\Windows\System32)
 $destinationDirectory = "C:\Windows\System32"
 
-# Specify the PSExec executable name
-$psexecExecutable = "PsExec.exe"
-
-# Build the full source and destination paths
-$sourcePath = Join-Path -Path $sourceDirectory -ChildPath $psexecExecutable
-$destinationPath = Join-Path -Path $destinationDirectory -ChildPath $psexecExecutable
-
 try {
-    # Check if the source file exists
-    if (Test-Path $sourcePath) {
-        # Copy the file to the destination
-        Copy-Item -Path $sourcePath -Destination $destinationPath -Force
-        Write-Host "PSExec copied to $destinationPath"
+    # Check if the source directory exists
+    if (Test-Path $sourceDirectory -PathType Container) {
+        # Get all files in the source directory
+        $files = Get-ChildItem -Path $sourceDirectory
+
+        # Copy each file to the destination directory
+        foreach ($file in $files) {
+            $destinationPath = Join-Path -Path $destinationDirectory -ChildPath $file.Name
+            Copy-Item -Path $file.FullName -Destination $destinationPath -Force
+            Write-Host "File $($file.Name) copied to $destinationPath"
+        }
     } else {
-        throw "PSExec not found in the specified source directory on the network."
+        throw "Source directory does not exist on the network."
     }
 } catch {
     Write-Host "Error: $_"
